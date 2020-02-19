@@ -246,6 +246,7 @@ HEX_DIGIT [0-9a-fA-F]
 [0-9]*\.[0-9]+([eE][-+]?[0-9]+)? return TK_FLOAT;
 
 [a-zA-Z][a-zA-Z0-9_]*  return TK_ID;
+[a-zA-Z0-9][a-zA-Z0-9_]*  return TK_ID;
 "@"                    return TK_AT_SIGN;
 
 '([^'\\]|\\.|'')*'     return TK_STRING;

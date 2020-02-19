@@ -528,6 +528,7 @@ process_non_trans_prepare_stmt(network_mysqld_con *con)
                 g_warning("%s: original server null", G_STRLOC);
             }
         }
+        g_message("%s: [fzl] process_non_trans_prepare_stmt,master_preferred:%d,rw_flag:%d,stmt_type:%d,visit_slave:%d,con.prepare_stmt_count:%d, is_orig_ro_server:%d", G_STRLOC,con->srv->master_preferred,context->rw_flag,context->stmt_type,visit_slave,con->prepare_stmt_count,is_orig_ro_server);
     }
 
     if (visit_slave == FALSE) {
@@ -724,7 +725,7 @@ process_non_trans_query(network_mysqld_con *con, sql_context_t *context, mysqld_
     }                           /* end switch */
 
     if (con->srv->master_preferred || context->rw_flag & CF_WRITE || need_to_visit_master) {
-        g_debug("%s:rw here", G_STRLOC);
+        g_message("%s: [fzl] rw here,master_preferred:%d,rw_flag:%d,CF_WRITE:%d,need_to_visit_master:%d ", G_STRLOC,con->srv->master_preferred,context->rw_flag,CF_WRITE,need_to_visit_master);
         /* rw operation */
         con->srv->query_stats.client_query.rw++;
         if (is_orig_ro_server) {
@@ -736,7 +737,7 @@ process_non_trans_query(network_mysqld_con *con, sql_context_t *context, mysqld_
             }
         }
     } else {                    /* ro operation */
-        g_debug("%s:ro here", G_STRLOC);
+        g_message("%s: [fzl] ro here", G_STRLOC);
         con->srv->query_stats.client_query.ro++;
         con->is_read_ro_server_allowed = 1;
         if (con->srv->query_cache_enabled) {
@@ -1257,7 +1258,7 @@ process_query_or_stmt_prepare(network_mysqld_con *con, proxy_plugin_con_t *st,
     sql_context_t *context = st->sql_context;
     sql_context_parse_len(context, con->orig_sql);
         
-    g_debug("%s process query:%s", G_STRLOC, con->orig_sql->str);
+    g_message("%s: [fzl] process query:%s", G_STRLOC, con->orig_sql->str);
 
     if (context->rc == PARSE_SYNTAX_ERR) {
         char *msg = context->message;
@@ -1273,7 +1274,7 @@ process_query_or_stmt_prepare(network_mysqld_con *con, proxy_plugin_con_t *st,
         *disp_flag = PROXY_SEND_RESULT;
         return 0;
     } else if (context->rc == PARSE_UNRECOGNIZED) {
-        g_debug("%s SQL unrecognized: %s", G_STRLOC, con->orig_sql->str);
+        g_message("%s: [fzl] SQL unrecognized: %s,rw_flag:%d", G_STRLOC, con->orig_sql->str,context->rw_flag);
     }
 
     /* forbid force write on slave */
@@ -1314,6 +1315,7 @@ process_query_or_stmt_prepare(network_mysqld_con *con, proxy_plugin_con_t *st,
     default:
         break;
     }
+    g_message("%s:[fzl] rw_flag:%d,CF_FORCE_MASTER:%d,CF_FORCE_SLAVE:%d,con.is_in_transaction:%d,con.prepare_stmt_count:%d ", G_STRLOC,context->rw_flag,CF_FORCE_MASTER,CF_FORCE_SLAVE,con->is_in_transaction,con->prepare_stmt_count);
 
     if (context->rw_flag & (CF_FORCE_MASTER | CF_FORCE_SLAVE)) {
         if (!forced_visit(con, st, context, disp_flag)) {
